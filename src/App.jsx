@@ -1,14 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./index.css";
 import StartPage from "./StartPage";
 import GamePage from "./GamePage";
 
 function App() {
   const [page, setPage] = useState(1);  
-  const [target, setTarget] = useState("");
+  const [target, setTarget] = useState(80);
 
-  const [leftName, setLeftName] = useState(null);
-  const [rightName, setRightName] = useState(null);
+  const [leftName, setLeftName] = useState("Player 1");
+  const [rightName, setRightName] = useState("Player 2");
   const images = [
     { src: "/pics/dice-1.png", value: 1 },
     { src: "/pics/dice-2.png", value: 2 },
@@ -17,6 +17,11 @@ function App() {
     { src: "/pics/dice-5.png", value: 5 },
     { src: "/pics/dice-6.png", value: 6 },
   ];
+
+  const [isAIgame, setIsAIgame] = useState(false)
+  const [isAIcurrent, setIsAIcurrent] = useState(false)
+
+
   const [currentImage1, setCurrentImage1] = useState(images[0]);
   const [currentImage2, setCurrentImage2] = useState(images[0]);
 
@@ -26,21 +31,37 @@ function App() {
   const [LeftTotal, setLeftTotal] = useState(0);
   const [RightTotal, setRightTotal] = useState(0);
 
-  const [leftVictories, setLeftVictories] = useState(0);
-  const [rightVictories, setRightVictories] = useState(0);
+ const [leftVictories, setLeftVictories] = useState(0);
+const [rightVictories, setRightVictories] = useState(0);
+
+useEffect(() => {
+  const savedLeft = localStorage.getItem("leftVictories");
+  if (savedLeft) setLeftVictories(parseInt(savedLeft));
+}, []);
+useEffect(() => {
+  localStorage.setItem("leftVictories", leftVictories);
+}, [leftVictories]);
+useEffect(() => {
+  const savedRight = localStorage.getItem("rightVictories");
+  if (savedRight) setRightVictories(parseInt(savedRight));
+}, []);
+useEffect(() => {
+  localStorage.setItem("rightVictories", rightVictories);
+}, [rightVictories]);
+
 
   const [CurrentPlayer, setPlayer] = useState("left");
 
   const [LeftColor, setLeftColor] = useState("rgba(255, 255, 255, 0.5)");
   const [RightColor, setRightColor] = useState("white");
 
-  const [Winner, setWinner] = useState(NaN);
+  const [Winner, setWinner] = useState(null);
 
   const [showPopup, setShowPopup] = useState(false);
+
   function openPopup() {
   setShowPopup(true);
 }
-
 function closePopup() {
   setShowPopup(false);
 }
@@ -60,18 +81,11 @@ function closePopup() {
     }
   }
 
-function winning(){
-  openPopup();
-  setLeftCorrent(0);
-  setRightCorrent(0);
-  resetTotal();
-}
 
 function setTotal() {
   if (CurrentPlayer === "left") {
     setLeftTotal(prevTotal => {
       const newTotal = prevTotal + LeftCorrentNumber;
-
       if (newTotal === Number(target)) {
         setWinner(leftName);
         winning();
@@ -80,12 +94,9 @@ function setTotal() {
         setWinner(rightName);
         winning();
         setRightVictories(rightVictories + 1);
-        
       }
-
       return newTotal;
-    });
-  } 
+    });} 
   else {
     setRightTotal(prevTotal => {
       const newTotal = prevTotal + RightCorrentNumber;
@@ -99,17 +110,10 @@ function setTotal() {
         winning();
         setLeftVictories(leftVictories + 1);
       }
-
       return newTotal;
     });
   }
 }
-
-
-  function resetCurrent(){
-    if (CurrentPlayer === "left") {setLeftCorrent(0)}
-    else {setRightCorrent(0)}
-  }
 
   function resetTotal(){
     setRightTotal(0)
@@ -117,7 +121,12 @@ function setTotal() {
   }
 
 
-  
+  function winning(){
+  openPopup();
+  setLeftCorrent(0);
+  setRightCorrent(0);
+  resetTotal();
+}
 
 
   function DiceRoll() {
@@ -138,11 +147,48 @@ function setTotal() {
     }
   }
 
-  function Hold() {
-      setTotal(); 
-      resetCurrent();
-      ChangePlayer();
+function Hold() {
+  setTotal();
+  if (Winner) return;
+
+  const nextPlayer = CurrentPlayer === "left" ? "right" : "left";
+
+  // עדכן את CurrentPlayer מיד
+  setPlayer(nextPlayer);
+  setLeftColor(nextPlayer === "left" ? "rgba(255, 255, 255, 0.5)" : "white");
+  setRightColor(nextPlayer === "right" ? "rgba(255, 255, 255, 0.5)" : "white");
+
+  if (isAIgame && nextPlayer === "right") {
+    playAIGame(nextPlayer);
   }
+}
+
+async function playAIGame(player) {
+  const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+  const rolls = Math.floor(Math.random() * 8) + 1;
+
+  for (let i = 0; i < rolls; i++) {
+    // השתמש במשתנה player במקום CurrentPlayer
+    if (player === "right") {
+      DiceRoll();
+    }
+    await sleep(500);
+    if (Winner) return;
+  }
+
+  // סיום סיבוב AI
+  setTotal();
+
+  if (!Winner) {
+    // החזר את התור לידני
+    setPlayer("left");
+    setLeftColor("rgba(255, 255, 255, 0.5)");
+    setRightColor("white");
+  }
+}
+
+
+
 
   if (page === 1) {
   return (
@@ -154,6 +200,10 @@ function setTotal() {
       leftName={leftName}
       setLeftName={setLeftName}
       setRightName={setRightName}
+      isAIgame={isAIgame}
+      isAIcurrent={isAIcurrent}
+      setIsAIgame={setIsAIgame}
+      setIsAIcurrent={setIsAIcurrent}
     />
   );
 } else if (page === 2) {

@@ -73,7 +73,7 @@ export default function GamePage({
       <div className="popup-overlay">
         <div className="popup">
           <h1 className="h1-popup">{Winner}</h1>
-          <h2>reached the winning grade!</h2>
+          <h2>is the Winner!</h2>
           <button onClick={closePopup}>Close</button>
         </div>
       </div>
