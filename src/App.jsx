@@ -19,8 +19,6 @@ function App() {
   ];
 
   const [isAIgame, setIsAIgame] = useState(false)
-  const [isAIcurrent, setIsAIcurrent] = useState(false)
-
 
   const [currentImage1, setCurrentImage1] = useState(images[0]);
   const [currentImage2, setCurrentImage2] = useState(images[0]);
@@ -67,6 +65,38 @@ function closePopup() {
 }
 
 
+  function resetTotal(){
+    setRightTotal(0)
+    setLeftTotal(0)
+  }
+
+
+  function winning(){
+  openPopup();
+  setLeftCorrent(0);
+  setRightCorrent(0);
+  resetTotal();
+}
+
+
+  function DiceRoll(Player) {
+    const randomIndex1 = Math.floor(Math.random() * images.length);
+    const randomIndex2 = Math.floor(Math.random() * images.length);
+    setCurrentImage1(images[randomIndex1]);
+    setCurrentImage2(images[randomIndex2]);
+    if (images[randomIndex1].value + images[randomIndex2].value === 12) {
+      resetCurrent()
+    }
+    else {
+      if (Player === "left") { 
+        setLeftCorrent(prevSum => prevSum + images[randomIndex1].value + images[randomIndex2].value);
+      }
+      else {
+          setRightCorrent(prevSum => prevSum + images[randomIndex1].value + images[randomIndex2].value);
+      }
+    }
+  }
+
   function ChangePlayer() {
     if (CurrentPlayer === "left") {
       setPlayer("right")
@@ -82,8 +112,8 @@ function closePopup() {
   }
 
 
-function setTotal() {
-  if (CurrentPlayer === "left") {
+function setTotal(Player) {
+  if (Player === "left") {
     setLeftTotal(prevTotal => {
       const newTotal = prevTotal + LeftCorrentNumber;
       if (newTotal === Number(target)) {
@@ -115,80 +145,29 @@ function setTotal() {
   }
 }
 
-  function resetTotal(){
-    setRightTotal(0)
-    setLeftTotal(0)
-  }
-
-
-  function winning(){
-  openPopup();
-  setLeftCorrent(0);
-  setRightCorrent(0);
-  resetTotal();
+async function Hold() {
+  if (CurrentPlayer === "left") {
+    setTotal("left");
+    ChangePlayer();
+    if (isAIgame) {
+    await playAIGame();
+  }}
+  else {
+    setTotal("right");
+    ChangePlayer();}
 }
 
-
-  function DiceRoll() {
-    const randomIndex1 = Math.floor(Math.random() * images.length);
-    const randomIndex2 = Math.floor(Math.random() * images.length);
-    setCurrentImage1(images[randomIndex1]);
-    setCurrentImage2(images[randomIndex2]);
-    if (images[randomIndex1].value + images[randomIndex2].value === 12) {
-      resetCurrent()
-    }
-    else {
-      if (CurrentPlayer === "left") { 
-        setLeftCorrent(prevSum => prevSum + images[randomIndex1].value + images[randomIndex2].value);
-      }
-      else {
-          setRightCorrent(prevSum => prevSum + images[randomIndex1].value + images[randomIndex2].value);
-      }
-    }
-  }
-
-function Hold() {
-  setTotal();
-  if (Winner) return;
-
-  const nextPlayer = CurrentPlayer === "left" ? "right" : "left";
-
-  // עדכן את CurrentPlayer מיד
-  setPlayer(nextPlayer);
-  setLeftColor(nextPlayer === "left" ? "rgba(255, 255, 255, 0.5)" : "white");
-  setRightColor(nextPlayer === "right" ? "rgba(255, 255, 255, 0.5)" : "white");
-
-  if (isAIgame && nextPlayer === "right") {
-    playAIGame(nextPlayer);
-  }
-}
-
-async function playAIGame(player) {
+async function playAIGame() {
   const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-  const rolls = Math.floor(Math.random() * 8) + 1;
+  const rolls = Math.floor(Math.random() * 5) + 1;
 
   for (let i = 0; i < rolls; i++) {
-    // השתמש במשתנה player במקום CurrentPlayer
-    if (player === "right") {
-      DiceRoll();
-    }
+    DiceRoll("right");
     await sleep(500);
-    if (Winner) return;
   }
-
-  // סיום סיבוב AI
-  setTotal();
-
-  if (!Winner) {
-    // החזר את התור לידני
-    setPlayer("left");
-    setLeftColor("rgba(255, 255, 255, 0.5)");
-    setRightColor("white");
+    setTotal("right");
+    ChangePlayer();
   }
-}
-
-
-
 
   if (page === 1) {
   return (
@@ -201,9 +180,7 @@ async function playAIGame(player) {
       setLeftName={setLeftName}
       setRightName={setRightName}
       isAIgame={isAIgame}
-      isAIcurrent={isAIcurrent}
       setIsAIgame={setIsAIgame}
-      setIsAIcurrent={setIsAIcurrent}
     />
   );
 } else if (page === 2) {

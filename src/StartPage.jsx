@@ -7,9 +7,7 @@ export default function StartPage({
   setLeftName,
   setRightName,
   isAIgame,
-  IsAIcurrent,
   setIsAIgame,
-  setIsAIcurrent,
 }) {
   return (
     <div style={{ textAlign: "center", marginTop: "100px" }}>
@@ -60,7 +58,6 @@ export default function StartPage({
             return;}
             setRightName("AI");
             setIsAIgame(true);
-            setIsAIcurrent(false);
             setPage(2);
           }}
           className="botton1"
